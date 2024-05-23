@@ -3,8 +3,7 @@ const { parse } = require('csv-parse');
 const fs = require('fs');
 
 // Path to the Chrome executable
-// const CHROME_PATH = 'C://Program Files (x86)//Microsoft//Edge//Application/msedge.exe';  // Adjust this path according to your installation
-const CHROME_PATH = 'C://Program Files//Google//Chrome//Application//chrome.exe'
+const CHROME_PATH = 'C://Program Files//Google//Chrome//Application//chrome.exe';  // Adjust this path according to your installation
 const csvFilePath = 'csv.csv';
 
 (async () => {
@@ -17,20 +16,17 @@ const csvFilePath = 'csv.csv';
             const proxyPassword = record.Proxy_Password;
             const proxyAddress = record.Proxy_Address;
             const proxyPort = record.Proxy_Port;
+            const userAgent = record.User_Agent;
 
             console.log(`Using proxy: ${proxyAddress}:${proxyPort}`);
+            console.log(`Using user agent: ${userAgent}`);
 
             const browser = await puppeteer.launch({
                 executablePath: CHROME_PATH, 
                 headless: false,
                 args: [
                     `--proxy-server=${proxyAddress}:${proxyPort}`,
-                        `--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.99 Mobile/15E148 Safari/604.1`
-                //   `user-agent= Mozilla/5.0 (Android 10; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0`
-
-                        ,'--disable-device-emulation',
-                    '--disable-network-emulation',
-
+                    `--user-agent=${userAgent}`
                 ],
                 ignoreHTTPSErrors: true
             });
@@ -54,7 +50,7 @@ const csvFilePath = 'csv.csv';
             }
 
             try {
-                await page.setViewport({ width: 390, height: 844 });
+                await page.setViewport({ width: 390, height: 844, isMobile: true });
 
                 await page.goto('https://trackback.gotrackier.com/click?campaign_id=31585&pub_id=18', {
                     waitUntil: 'domcontentloaded'
@@ -78,17 +74,17 @@ const csvFilePath = 'csv.csv';
 
                 await page.waitForSelector('input[value="Submit"]', { timeout: 30000, visible: true });
                 await page.click('input[value="Submit"]', { delay: 200 });
-                await new Promise(resolve => setTimeout(resolve, 100000));
-                await page.screenshot({ path: `error_${record.First_Name}.png` });
+                await new Promise(resolve => setTimeout(resolve, 90000)); // Wait 10 seconds for the form submission to complete
+                // await page.screenshot({ path: `screenshot_${record.First_Name}.png` });
 
                 console.log(`Form submitted for: ${record.First_Name}`);
+                console.log(userAgent);
             } catch (error) {
                 console.error(`Error: ${error}`);
             } finally {
-                // await browser.close();
+                await browser.close();
             }
         }
-
 
         console.log('All forms submitted successfully.');
     } catch (error) {
